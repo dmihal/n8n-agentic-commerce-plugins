@@ -11,16 +11,21 @@
     "lint:fix": "pnpm -r lint:fix",
     "test": "pnpm -r test",
     "clean": "pnpm -r clean && rm -rf node_modules",
-    "package": "pnpm -r package"
+    "package": "pnpm -r package",
+    "n8n:start": "pnpm build && n8n start",
+    "n8n:dev": "pnpm build:watch & n8n start",
+    "n8n:setup": "mkdir -p ~/.n8n/custom && cd ~/.n8n/custom && npm init -y",
+    "n8n:link": "cd nodes/example-commerce-node && npm link && cd ~/.n8n/custom && npm link n8n-nodes-example-commerce"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0",
+    "n8n": "^1.114.3",
+    "n8n-node-dev": "^1.0.0",
     "ts-node": "^10.0.0",
-    "n8n-node-dev": "^1.0.0"
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=18.0.0",

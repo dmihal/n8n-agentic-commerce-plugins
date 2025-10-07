@@ -16,12 +16,25 @@ A collection of n8n nodes for agentic commerce workflows, built with TypeScript 
 git clone <your-repo-url>
 cd n8n-agentic-commerce-plugins
 
-# Install dependencies
+# Install dependencies (includes n8n as dev dependency)
 pnpm install
 
 # Build all nodes
 pnpm build
 ```
+
+### Running n8n Locally
+
+```bash
+# First-time setup (only needed once)
+pnpm run n8n:setup
+pnpm run n8n:link
+
+# Start n8n with your plugins
+pnpm run n8n:start
+```
+
+Then open [http://localhost:5678](http://localhost:5678) to access n8n with your custom commerce plugins!
 
 ## 📁 Project Structure
 
@@ -129,6 +142,65 @@ pnpm package
    ```
 
 3. Restart n8n to load the new nodes
+
+## 🚀 Local Development with n8n
+
+This project includes n8n as a dev dependency, making it easy to run n8n locally with your custom plugins for development and testing.
+
+### Quick Start
+
+1. **First-time setup** (only needed once):
+   ```bash
+   pnpm run n8n:setup
+   pnpm run n8n:link
+   ```
+
+2. **Start n8n with your plugins**:
+   ```bash
+   pnpm run n8n:start
+   ```
+
+3. **Access n8n**: Open [http://localhost:5678](http://localhost:5678) in your browser
+
+### Available Scripts
+
+- `pnpm run n8n:start` - Build plugins and start n8n
+- `pnpm run n8n:dev` - Start n8n with watch mode for plugin development
+- `pnpm run n8n:setup` - Set up n8n custom directory (first-time only)
+- `pnpm run n8n:link` - Link your plugins to n8n
+
+### Development Workflow
+
+1. **Make changes** to your TypeScript files in `src/`
+2. **Rebuild** plugins: `pnpm build` (or use `pnpm run n8n:dev` for watch mode)
+3. **Reload** n8n interface - your changes will be available immediately
+
+### Adding New Plugins
+
+When you create new plugins using `./scripts/create-node.sh <node-name>`:
+
+1. **Build the new plugin**:
+   ```bash
+   pnpm build
+   ```
+
+2. **Link it to n8n**:
+   ```bash
+   cd nodes/<node-name>-node && npm link
+   cd ~/.n8n/custom && npm link n8n-nodes-<node-name>
+   ```
+
+3. **Restart n8n**:
+   ```bash
+   pnpm run n8n:start
+   ```
+
+### Stopping n8n
+
+To stop the local n8n instance:
+```bash
+pkill -f "n8n start"
+```
 
 ## 🧪 Testing
 
