@@ -1,0 +1,30 @@
+{
+  "name": "n8n-agentic-commerce-plugins",
+  "version": "1.0.0",
+  "description": "A collection of n8n nodes for agentic commerce workflows",
+  "private": true,
+  "scripts": {
+    "build": "pnpm -r build",
+    "build:watch": "pnpm -r build:watch",
+    "dev": "pnpm -r dev",
+    "lint": "pnpm -r lint",
+    "lint:fix": "pnpm -r lint:fix",
+    "test": "pnpm -r test",
+    "clean": "pnpm -r clean && rm -rf node_modules",
+    "package": "pnpm -r package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "n8n-node-dev": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}
