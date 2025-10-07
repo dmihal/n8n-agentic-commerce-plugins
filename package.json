@@ -15,7 +15,8 @@
     "n8n:start": "pnpm build && n8n start",
     "n8n:dev": "pnpm build:watch & n8n start",
     "n8n:setup": "mkdir -p ~/.n8n/custom && cd ~/.n8n/custom && npm init -y",
-    "n8n:link": "cd nodes/example-commerce-node && npm link && cd ~/.n8n/custom && npm link n8n-nodes-example-commerce"
+    "n8n:link": "cd nodes/example-commerce-node && npm link && cd ~/.n8n/custom && npm link n8n-nodes-example-commerce",
+    "n8n:link:a2a": "cd nodes/a2a-agent-card-node && npm link && cd ~/.n8n/custom && npm link n8n-nodes-a2a-agent-card"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

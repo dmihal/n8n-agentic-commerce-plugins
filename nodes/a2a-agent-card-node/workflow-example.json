@@ -1,0 +1,119 @@
+{
+  "name": "A2A Agent Discovery Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "a2a/agent-card",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "a2a-agent-card"
+    },
+    {
+      "parameters": {
+        "agentId": "did:web:example.com",
+        "displayName": "My n8n Agent",
+        "version": "1.0",
+        "endpointBaseUrl": "https://example.com/webhook/a2a",
+        "description": "n8n A2A-compatible automation agent",
+        "capabilities": {
+          "capability": [
+            {
+              "name": "message/send"
+            },
+            {
+              "name": "message/stream"
+            },
+            {
+              "name": "tasks/get"
+            },
+            {
+              "name": "tasks/cancel"
+            }
+          ]
+        },
+        "securitySchemes": {
+          "scheme": [
+            {
+              "name": "apiKey",
+              "type": "apiKey",
+              "in": "header",
+              "name": "Authorization"
+            }
+          ]
+        },
+        "extensions": {
+          "extension": [
+            {
+              "name": "erc8004",
+              "value": "https://onchain.example/erc8004/agent"
+            }
+          ]
+        }
+      },
+      "id": "a2a-agent-card",
+      "name": "A2A Agent Card",
+      "type": "n8n-nodes-a2a-agent-card.a2aAgentCard",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "public, max-age=300"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-to-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "A2A Agent Card",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "A2A Agent Card": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1"
+}

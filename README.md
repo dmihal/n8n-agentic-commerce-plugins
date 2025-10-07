@@ -25,6 +25,22 @@ pnpm build
 
 ### Running n8n Locally
 
+#### Option 1: Using N8N_CUSTOM_EXTENSIONS (Recommended)
+
+The easiest way to develop and test custom nodes:
+
+```bash
+# Build all nodes
+pnpm build
+
+# Start n8n with custom extensions loaded automatically
+pnpm run n8n:dev:custom
+```
+
+This automatically loads both the example-commerce-node and a2a-agent-card-node.
+
+#### Option 2: Manual Linking
+
 ```bash
 # First-time setup (only needed once)
 pnpm run n8n:setup
@@ -47,7 +63,14 @@ n8n-agentic-commerce-plugins/
 │   │   ├── dist/                   # Built JavaScript files
 │   │   ├── package.json            # Node-specific package.json
 │   │   └── tsconfig.json           # Node-specific TypeScript config
-│   └── [other-nodes]/              # Additional nodes
+│   └── a2a-agent-card-node/        # A2A Agent Card node
+│       ├── src/                    # TypeScript source files
+│       ├── icons/                  # Node icons (SVG)
+│       ├── dist/                   # Built JavaScript files
+│       ├── package.json            # Node-specific package.json
+│       ├── tsconfig.json           # Node-specific TypeScript config
+│       ├── README.md               # Node documentation
+│       └── workflow-example.json   # Example workflow
 ├── scripts/                        # Utility scripts
 │   └── create-node.sh              # Script to generate new nodes
 ├── package.json                    # Root workspace configuration
