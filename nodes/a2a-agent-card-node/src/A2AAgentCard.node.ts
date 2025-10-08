@@ -22,39 +22,21 @@ export class A2AAgentCard implements INodeType {
 		outputs: ['main'],
 		properties: [
 			{
-				displayName: 'Agent ID',
-				name: 'agentId',
+				displayName: 'Protocol Version',
+				name: 'protocolVersion',
 				type: 'string',
-				default: '',
+				default: '0.3.0',
 				required: true,
-				description: 'Unique identifier (UUID or DID) for the agent',
-				placeholder: 'did:web:example.com',
+				description: 'A2A protocol version supported by this agent',
 			},
 			{
-				displayName: 'Display Name',
-				name: 'displayName',
+				displayName: 'Agent Name',
+				name: 'name',
 				type: 'string',
 				default: '',
 				required: true,
 				description: 'Human-readable name of the agent',
 				placeholder: 'My n8n Agent',
-			},
-			{
-				displayName: 'Version',
-				name: 'version',
-				type: 'string',
-				default: '1.0',
-				required: true,
-				description: 'A2A version supported by this agent',
-			},
-			{
-				displayName: 'Endpoint Base URL',
-				name: 'endpointBaseUrl',
-				type: 'string',
-				default: '',
-				required: true,
-				description: 'Base public URL of the agent\'s API endpoints',
-				placeholder: 'https://example.com/webhook/a2a',
 			},
 			{
 				displayName: 'Description',
@@ -66,59 +48,181 @@ export class A2AAgentCard implements INodeType {
 				placeholder: 'n8n A2A-compatible automation agent',
 			},
 			{
-				displayName: 'Capabilities',
-				name: 'capabilities',
+				displayName: 'Primary URL',
+				name: 'url',
+				type: 'string',
+				default: '',
+				required: true,
+				description: 'Primary endpoint URL for interacting with the agent',
+				placeholder: 'https://example.com/webhook/a2a',
+			},
+			{
+				displayName: 'Preferred Transport',
+				name: 'preferredTransport',
+				type: 'options',
+				options: [
+					{
+						name: 'JSON-RPC',
+						value: 'JSONRPC',
+					},
+					{
+						name: 'gRPC',
+						value: 'GRPC',
+					},
+					{
+						name: 'HTTP+JSON/REST',
+						value: 'HTTPJSON',
+					},
+				],
+				default: 'JSONRPC',
+				description: 'Transport protocol for the primary endpoint',
+			},
+			{
+				displayName: 'Skills',
+				name: 'skills',
 				type: 'fixedCollection',
 				default: {},
 				required: true,
-				description: 'List of supported capabilities/skills',
+				description: 'List of agent skills/capabilities',
 				typeOptions: {
 					multipleValues: true,
 				},
 				options: [
 					{
-						name: 'capability',
-						displayName: 'Capability',
+						name: 'skill',
+						displayName: 'Skill',
 						values: [
 							{
-								displayName: 'Capability Name',
+								displayName: 'Skill ID',
+								name: 'id',
+								type: 'string',
+								default: '',
+								description: 'Unique identifier for the skill',
+								placeholder: 'message-send',
+							},
+							{
+								displayName: 'Skill Name',
 								name: 'name',
 								type: 'string',
 								default: '',
-								description: 'Name of the capability (e.g., message/send, tasks/get)',
-								placeholder: 'message/send',
+								description: 'Human-readable name of the skill',
+								placeholder: 'Send Message',
+							},
+							{
+								displayName: 'Skill Description',
+								name: 'description',
+								type: 'string',
+								default: '',
+								description: 'Description of what this skill does',
+								placeholder: 'Sends messages to the agent',
+							},
+							{
+								displayName: 'Input Modes',
+								name: 'inputModes',
+								type: 'multiOptions',
+								options: [
+									{
+										name: 'text/plain',
+										value: 'text/plain',
+									},
+									{
+										name: 'application/json',
+										value: 'application/json',
+									},
+									{
+										name: 'text/markdown',
+										value: 'text/markdown',
+									},
+								],
+								default: ['text/plain'],
+								description: 'Supported input MIME types for this skill',
+							},
+							{
+								displayName: 'Output Modes',
+								name: 'outputModes',
+								type: 'multiOptions',
+								options: [
+									{
+										name: 'text/plain',
+										value: 'text/plain',
+									},
+									{
+										name: 'application/json',
+										value: 'application/json',
+									},
+									{
+										name: 'text/markdown',
+										value: 'text/markdown',
+									},
+								],
+								default: ['text/plain'],
+								description: 'Supported output MIME types for this skill',
 							},
 						],
 					},
 				],
 			},
 			{
-				displayName: 'Security Schemes',
-				name: 'securitySchemes',
+				displayName: 'Default Input Modes',
+				name: 'defaultInputModes',
+				type: 'multiOptions',
+				options: [
+					{
+						name: 'text/plain',
+						value: 'text/plain',
+					},
+					{
+						name: 'application/json',
+						value: 'application/json',
+					},
+					{
+						name: 'text/markdown',
+						value: 'text/markdown',
+					},
+				],
+				default: ['text/plain'],
+				description: 'Default supported input MIME types for all skills',
+			},
+			{
+				displayName: 'Default Output Modes',
+				name: 'defaultOutputModes',
+				type: 'multiOptions',
+				options: [
+					{
+						name: 'text/plain',
+						value: 'text/plain',
+					},
+					{
+						name: 'application/json',
+						value: 'application/json',
+					},
+					{
+						name: 'text/markdown',
+						value: 'text/markdown',
+					},
+				],
+				default: ['text/plain'],
+				description: 'Default supported output MIME types for all skills',
+			},
+			{
+				displayName: 'Security Requirements',
+				name: 'security',
 				type: 'fixedCollection',
 				default: {},
 				required: false,
-				description: 'Supported authentication methods',
+				description: 'Security requirements following OpenAPI 3.0 format',
 				typeOptions: {
 					multipleValues: true,
 				},
 				options: [
 					{
-						name: 'scheme',
-						displayName: 'Security Scheme',
+						name: 'requirement',
+						displayName: 'Security Requirement',
 						values: [
 							{
-								displayName: 'Scheme Name',
-								name: 'name',
-								type: 'string',
-								default: '',
-								description: 'Name of the security scheme',
-								placeholder: 'apiKey',
-							},
-							{
-								displayName: 'Type',
-								name: 'type',
-								type: 'options',
+								displayName: 'Security Schemes',
+								name: 'schemes',
+								type: 'multiOptions',
 								options: [
 									{
 										name: 'API Key',
@@ -132,50 +236,89 @@ export class A2AAgentCard implements INodeType {
 										name: 'mTLS',
 										value: 'mtls',
 									},
-								],
-								default: 'apiKey',
-							},
-							{
-								displayName: 'Location',
-								name: 'in',
-								type: 'options',
-								options: [
 									{
-										name: 'Header',
-										value: 'header',
-									},
-									{
-										name: 'Query',
-										value: 'query',
-									},
-									{
-										name: 'Cookie',
-										value: 'cookie',
+										name: 'Bearer Token',
+										value: 'bearer',
 									},
 								],
-								default: 'header',
-								displayOptions: {
-									show: {
-										type: ['apiKey'],
-									},
-								},
+								default: [],
+								description: 'Security schemes that can be used together',
 							},
 							{
-								displayName: 'Parameter Name',
-								name: 'name',
+								displayName: 'Scopes',
+								name: 'scopes',
 								type: 'string',
 								default: '',
-								description: 'Name of the parameter',
-								placeholder: 'Authorization',
-								displayOptions: {
-									show: {
-										type: ['apiKey'],
-									},
-								},
+								description: 'Comma-separated list of scopes (for OAuth2)',
+								placeholder: 'read,write',
 							},
 						],
 					},
 				],
+			},
+			{
+				displayName: 'Additional Interfaces',
+				name: 'interfaces',
+				type: 'fixedCollection',
+				default: {},
+				required: false,
+				description: 'Additional supported interfaces with different transports',
+				typeOptions: {
+					multipleValues: true,
+				},
+				options: [
+					{
+						name: 'interface',
+						displayName: 'Interface',
+						values: [
+							{
+								displayName: 'URL',
+								name: 'url',
+								type: 'string',
+								default: '',
+								description: 'URL for this interface',
+								placeholder: 'https://example.com/grpc',
+							},
+							{
+								displayName: 'Transport',
+								name: 'transport',
+								type: 'options',
+								options: [
+									{
+										name: 'JSON-RPC',
+										value: 'JSONRPC',
+									},
+									{
+										name: 'gRPC',
+										value: 'GRPC',
+									},
+									{
+										name: 'HTTP+JSON/REST',
+										value: 'HTTPJSON',
+									},
+								],
+								default: 'JSONRPC',
+								description: 'Transport protocol for this interface',
+							},
+						],
+					},
+				],
+			},
+			{
+				displayName: 'Supports Authenticated Extended Card',
+				name: 'supportsAuthenticatedExtendedCard',
+				type: 'boolean',
+				default: false,
+				description: 'Whether the agent can provide an extended agent card to authenticated users',
+			},
+			{
+				displayName: 'Icon URL',
+				name: 'iconUrl',
+				type: 'string',
+				default: '',
+				required: false,
+				description: 'URL to an icon for the agent',
+				placeholder: 'https://example.com/icon.png',
 			},
 			{
 				displayName: 'Extensions',
@@ -183,7 +326,7 @@ export class A2AAgentCard implements INodeType {
 				type: 'fixedCollection',
 				default: {},
 				required: false,
-				description: 'Protocol extensions (e.g., ERC-8004, x402)',
+				description: 'Protocol extensions supported by this agent',
 				typeOptions: {
 					multipleValues: true,
 				},
@@ -193,60 +336,152 @@ export class A2AAgentCard implements INodeType {
 						displayName: 'Extension',
 						values: [
 							{
-								displayName: 'Extension Name',
-								name: 'name',
-								type: 'string',
-								default: '',
-								description: 'Name of the extension',
-								placeholder: 'erc8004',
+								displayName: 'Extension Type',
+								name: 'type',
+								type: 'options',
+								options: [
+									{
+										name: 'AP2 (Agent Payments Protocol)',
+										value: 'ap2',
+									},
+									{
+										name: 'Custom Extension',
+										value: 'custom',
+									},
+								],
+								default: 'ap2',
+								description: 'Type of extension to configure',
 							},
 							{
-								displayName: 'Extension Value',
-								name: 'value',
+								displayName: 'Custom Extension URI',
+								name: 'customUri',
 								type: 'string',
 								default: '',
-								description: 'Value or URL for the extension',
-								placeholder: 'https://onchain.example/erc8004/agent',
+								description: 'Custom extension URI',
+								placeholder: 'https://example.com/my-extension/v1.0',
+								displayOptions: {
+									show: {
+										type: ['custom'],
+									},
+								},
+							},
+							{
+								displayName: 'Extension Description',
+								name: 'description',
+								type: 'string',
+								default: '',
+								description: 'Description of what this extension enables',
+								placeholder: 'This agent can process payments on behalf of users',
+							},
+							{
+								displayName: 'AP2 Roles',
+								name: 'ap2Roles',
+								type: 'multiOptions',
+								options: [
+									{
+										name: 'Merchant',
+										value: 'merchant',
+									},
+									{
+										name: 'Shopper',
+										value: 'shopper',
+									},
+									{
+										name: 'Credentials Provider',
+										value: 'credentials-provider',
+									},
+									{
+										name: 'Payment Processor',
+										value: 'payment-processor',
+									},
+								],
+								default: [],
+								description: 'AP2 roles this agent performs',
+								displayOptions: {
+									show: {
+										type: ['ap2'],
+									},
+								},
+							},
+							{
+								displayName: 'Required Extension',
+								name: 'required',
+								type: 'boolean',
+								default: false,
+								description: 'Whether clients must support this extension to use the agent',
+							},
+							{
+								displayName: 'Custom Parameters',
+								name: 'customParams',
+								type: 'fixedCollection',
+								default: {},
+								required: false,
+								description: 'Custom parameters for the extension',
+								typeOptions: {
+									multipleValues: true,
+								},
+								options: [
+									{
+										name: 'param',
+										displayName: 'Parameter',
+										values: [
+											{
+												displayName: 'Parameter Name',
+												name: 'name',
+												type: 'string',
+												default: '',
+												description: 'Name of the parameter',
+											},
+											{
+												displayName: 'Parameter Value',
+												name: 'value',
+												type: 'string',
+												default: '',
+												description: 'Value of the parameter',
+											},
+										],
+									},
+								],
+								displayOptions: {
+									show: {
+										type: ['custom'],
+									},
+								},
 							},
 						],
 					},
 				],
 			},
 			{
-				displayName: 'Auth Required for Extended Card',
-				name: 'authRequiredForExtendedCard',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to hide sensitive fields behind authenticated route',
-			},
-			{
-				displayName: 'Additional Fields',
-				name: 'additionalFields',
+				displayName: 'Signatures',
+				name: 'signatures',
 				type: 'fixedCollection',
 				default: {},
 				required: false,
-				description: 'Freeform metadata for future expansion',
+				description: 'JSON Web Signatures for verifying AgentCard integrity',
 				typeOptions: {
 					multipleValues: true,
 				},
 				options: [
 					{
-						name: 'field',
-						displayName: 'Field',
+						name: 'signature',
+						displayName: 'Signature',
 						values: [
 							{
-								displayName: 'Field Name',
-								name: 'name',
+								displayName: 'Protected Header',
+								name: 'protected',
 								type: 'string',
 								default: '',
-								description: 'Name of the additional field',
+								description: 'Base64url-encoded protected header',
+								placeholder: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9',
 							},
 							{
-								displayName: 'Field Value',
-								name: 'value',
+								displayName: 'Signature',
+								name: 'signature',
 								type: 'string',
 								default: '',
-								description: 'Value of the additional field',
+								description: 'Base64url-encoded signature',
+								placeholder: 'signature_value_here',
 							},
 						],
 					},
@@ -261,23 +496,30 @@ export class A2AAgentCard implements INodeType {
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				const agentId = this.getNodeParameter('agentId', i) as string;
-				const displayName = this.getNodeParameter('displayName', i) as string;
-				const version = this.getNodeParameter('version', i) as string;
-				const endpointBaseUrl = this.getNodeParameter('endpointBaseUrl', i) as string;
+				const protocolVersion = this.getNodeParameter('protocolVersion', i) as string;
+				const name = this.getNodeParameter('name', i) as string;
 				const description = this.getNodeParameter('description', i) as string;
-				const capabilities = this.getNodeParameter('capabilities', i) as any;
-				const securitySchemes = this.getNodeParameter('securitySchemes', i) as any;
+				const url = this.getNodeParameter('url', i) as string;
+				const preferredTransport = this.getNodeParameter('preferredTransport', i) as string;
+				const skills = this.getNodeParameter('skills', i) as any;
+				const defaultInputModes = this.getNodeParameter('defaultInputModes', i) as string[];
+				const defaultOutputModes = this.getNodeParameter('defaultOutputModes', i) as string[];
+				const security = this.getNodeParameter('security', i) as any;
+				const interfaces = this.getNodeParameter('interfaces', i) as any;
+				const supportsAuthenticatedExtendedCard = this.getNodeParameter('supportsAuthenticatedExtendedCard', i) as boolean;
+				const iconUrl = this.getNodeParameter('iconUrl', i) as string;
 				const extensions = this.getNodeParameter('extensions', i) as any;
-				const additionalFields = this.getNodeParameter('additionalFields', i) as any;
+				const signatures = this.getNodeParameter('signatures', i) as any;
 
-				// Build the agent card JSON
+				// Build the A2A-compliant agent card JSON
 				const agentCard: any = {
-					id: agentId,
-					displayName: displayName,
-					version: version,
-					serviceEndpoint: {},
-					capabilities: [],
+					protocolVersion: protocolVersion,
+					name: name,
+					url: url,
+					preferredTransport: preferredTransport,
+					defaultInputModes: defaultInputModes,
+					defaultOutputModes: defaultOutputModes,
+					skills: [],
 				};
 
 				// Add description if provided
@@ -285,56 +527,91 @@ export class A2AAgentCard implements INodeType {
 					agentCard.description = description;
 				}
 
-				// Process capabilities
-				if (capabilities && capabilities.capability) {
-					agentCard.capabilities = capabilities.capability.map((cap: any) => cap.name);
-					
-					// Build service endpoints based on capabilities
-					capabilities.capability.forEach((cap: any) => {
-						if (cap.name) {
-							agentCard.serviceEndpoint[cap.name] = `${endpointBaseUrl}/${cap.name}`;
+				// Process skills
+				if (skills && skills.skill) {
+					agentCard.skills = skills.skill.map((skill: any) => ({
+						id: skill.id,
+						name: skill.name,
+						description: skill.description,
+						inputModes: skill.inputModes || defaultInputModes,
+						outputModes: skill.outputModes || defaultOutputModes,
+					}));
+				}
+
+				// Process security requirements
+				if (security && security.requirement) {
+					agentCard.security = security.requirement.map((req: any) => {
+						const securityReq: any = {};
+						if (req.schemes && req.schemes.length > 0) {
+							req.schemes.forEach((scheme: string) => {
+								if (scheme === 'oauth2' && req.scopes) {
+									securityReq[scheme] = req.scopes.split(',').map((s: string) => s.trim());
+								} else {
+									securityReq[scheme] = [];
+								}
+							});
 						}
+						return securityReq;
 					});
 				}
 
-				// Process security schemes
-				if (securitySchemes && securitySchemes.scheme) {
-					agentCard.securitySchemes = {};
-					securitySchemes.scheme.forEach((scheme: any) => {
-						if (scheme.name) {
-							agentCard.securitySchemes[scheme.name] = {
-								type: scheme.type,
-							};
-							
-							if (scheme.type === 'apiKey') {
-								agentCard.securitySchemes[scheme.name].in = scheme.in;
-								agentCard.securitySchemes[scheme.name].name = scheme.name;
-							}
-						}
-					});
+				// Process additional interfaces
+				if (interfaces && interfaces.interface) {
+					agentCard.interfaces = interfaces.interface.map((intf: any) => ({
+						url: intf.url,
+						transport: intf.transport,
+					}));
+				}
+
+				// Add optional fields
+				if (supportsAuthenticatedExtendedCard) {
+					agentCard.supportsAuthenticatedExtendedCard = supportsAuthenticatedExtendedCard;
+				}
+
+				if (iconUrl) {
+					agentCard.iconUrl = iconUrl;
 				}
 
 				// Process extensions
 				if (extensions && extensions.extension) {
-					agentCard.extensions = {};
-					extensions.extension.forEach((ext: any) => {
-						if (ext.name && ext.value) {
-							agentCard.extensions[ext.name] = ext.value;
+					agentCard.extensions = extensions.extension.map((ext: any) => {
+						const extension: any = {
+							uri: ext.type === 'ap2' ? 'https://github.com/google-agentic-commerce/ap2/tree/v0.1' : ext.customUri,
+						};
+
+						if (ext.description) {
+							extension.description = ext.description;
 						}
+
+						if (ext.required) {
+							extension.required = ext.required;
+						}
+
+						// Build params based on extension type
+						if (ext.type === 'ap2' && ext.ap2Roles && ext.ap2Roles.length > 0) {
+							extension.params = {
+								roles: ext.ap2Roles,
+							};
+						} else if (ext.type === 'custom' && ext.customParams && ext.customParams.param) {
+							extension.params = {};
+							ext.customParams.param.forEach((param: any) => {
+								if (param.name && param.value) {
+									extension.params[param.name] = param.value;
+								}
+							});
+						}
+
+						return extension;
 					});
 				}
 
-				// Process additional fields
-				if (additionalFields && additionalFields.field) {
-					additionalFields.field.forEach((field: any) => {
-						if (field.name && field.value) {
-							agentCard[field.name] = field.value;
-						}
-					});
+				// Process signatures
+				if (signatures && signatures.signature) {
+					agentCard.signatures = signatures.signature.map((sig: any) => ({
+						protected: sig.protected,
+						signature: sig.signature,
+					}));
 				}
-
-				// Add schema version for internal tracking
-				agentCard.schemaVersion = '1.0';
 
 				returnData.push({
 					json: agentCard,
