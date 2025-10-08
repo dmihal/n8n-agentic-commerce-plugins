@@ -1,0 +1,72 @@
+{
+  "name": "EIP-712 Signer Example",
+  "nodes": [
+    {
+      "parameters": {
+        "domainName": "MyDApp",
+        "domainVersion": "1",
+        "chainId": 1,
+        "typesDefinition": "{\n  \"EIP712Domain\": [\n    {\"name\": \"name\", \"type\": \"string\"},\n    {\"name\": \"version\", \"type\": \"string\"},\n    {\"name\": \"chainId\", \"type\": \"uint256\"},\n    {\"name\": \"verifyingContract\", \"type\": \"address\"}\n  ],\n  \"Person\": [\n    {\"name\": \"name\", \"type\": \"string\"},\n    {\"name\": \"wallet\", \"type\": \"address\"}\n  ]\n}",
+        "primaryType": "Person",
+        "messageData": "{\n  \"name\": \"Alice\",\n  \"wallet\": \"0x1234567890123456789012345678901234567890\"\n}",
+        "operation": "sign"
+      },
+      "id": "sign-node",
+      "name": "Sign EIP-712 Message",
+      "type": "n8n-nodes-eip712-signer.EIP712Signer",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "credentials": {
+        "evmPrivateKey": {
+          "id": "evm-private-key",
+          "name": "EVM Private Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "domainName": "MyDApp",
+        "domainVersion": "1",
+        "chainId": 1,
+        "typesDefinition": "{\n  \"EIP712Domain\": [\n    {\"name\": \"name\", \"type\": \"string\"},\n    {\"name\": \"version\", \"type\": \"string\"},\n    {\"name\": \"chainId\", \"type\": \"uint256\"},\n    {\"name\": \"verifyingContract\", \"type\": \"address\"}\n  ],\n  \"Person\": [\n    {\"name\": \"name\", \"type\": \"string\"},\n    {\"name\": \"wallet\", \"type\": \"address\"}\n  ]\n}",
+        "primaryType": "Person",
+        "messageData": "{\n  \"name\": \"Alice\",\n  \"wallet\": \"0x1234567890123456789012345678901234567890\"\n}",
+        "signatureToVerify": "={{ $json.signature }}",
+        "signerAddress": "={{ $json.signerAddress }}",
+        "operation": "verify"
+      },
+      "id": "verify-node",
+      "name": "Verify EIP-712 Signature",
+      "type": "n8n-nodes-eip712-signer.EIP712Signer",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "evmPrivateKey": {
+          "id": "evm-private-key",
+          "name": "EVM Private Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Sign EIP-712 Message": {
+      "main": [
+        [
+          {
+            "node": "Verify EIP-712 Signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "eip712-signer-example",
+  "tags": []
+}
