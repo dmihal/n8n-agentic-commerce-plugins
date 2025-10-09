@@ -6,6 +6,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 import { ethers } from 'ethers';
+import { CHAIN_CONFIGS } from './chainConfig';
 
 interface ERC3009Domain {
 	name: string;
@@ -72,6 +73,36 @@ export class ERC3009Signer implements INodeType {
 				default: '',
 				required: true,
 				description: 'The address of the ERC-3009 token contract',
+			},
+			{
+				displayName: 'Blockchain',
+				name: 'blockchain',
+				type: 'options',
+				options: [
+					...CHAIN_CONFIGS.map(chain => ({
+						name: chain.name,
+						value: chain.chainId.toString(),
+					})),
+					{
+						name: 'Custom RPC',
+						value: 'custom',
+					},
+				],
+				default: '1',
+				description: 'Select the blockchain network',
+			},
+			{
+				displayName: 'Custom RPC URL',
+				name: 'customRpcUrl',
+				type: 'string',
+				displayOptions: {
+					show: {
+						blockchain: ['custom'],
+					},
+				},
+				default: '',
+				required: true,
+				description: 'Custom RPC endpoint URL',
 			},
 			{
 				displayName: 'From Address',
@@ -185,6 +216,7 @@ export class ERC3009Signer implements INodeType {
 
 				// Get ERC-3009 specific parameters
 				const tokenContract = this.getNodeParameter('tokenContract', i) as string;
+				const blockchain = this.getNodeParameter('blockchain', i) as string;
 				const fromAddress = this.getNodeParameter('fromAddress', i) as string;
 				const toAddress = this.getNodeParameter('toAddress', i) as string;
 				const value = this.getNodeParameter('value', i) as string;
@@ -217,12 +249,50 @@ export class ERC3009Signer implements INodeType {
 					throw new NodeOperationError(this.getNode(), 'Invalid value. Must be a positive integer (in wei)');
 				}
 
-				// Get chain ID from credentials or use default
-				const chainId = typeof credentials.chainId === 'number' ? credentials.chainId : 1;
+				// Get RPC URL and chain ID
+				let rpcUrl: string;
+				let chainId: number;
+
+				if (blockchain === 'custom') {
+					const customRpcUrl = this.getNodeParameter('customRpcUrl', i) as string;
+					if (!customRpcUrl) {
+						throw new NodeOperationError(this.getNode(), 'Custom RPC URL is required');
+					}
+					rpcUrl = customRpcUrl;
+					
+					// Get chain ID from RPC
+					try {
+						const provider = new ethers.JsonRpcProvider(rpcUrl);
+						const network = await provider.getNetwork();
+						chainId = Number(network.chainId);
+					} catch (error) {
+						throw new NodeOperationError(this.getNode(), `Failed to get chain ID from RPC: ${error instanceof Error ? error.message : String(error)}`);
+					}
+				} else {
+					const chainConfig = CHAIN_CONFIGS.find(chain => chain.chainId.toString() === blockchain);
+					if (!chainConfig) {
+						throw new NodeOperationError(this.getNode(), 'Invalid blockchain selection');
+					}
+					rpcUrl = chainConfig.rpcUrl;
+					chainId = chainConfig.chainId;
+				}
+
+				// Create provider to fetch token name
+				const provider = new ethers.JsonRpcProvider(rpcUrl);
+				
+				// Fetch token name dynamically
+				let tokenName: string;
+				try {
+					const abi = ['function name() view returns (string)'];
+					const contract = new ethers.Contract(tokenContract, abi, provider);
+					tokenName = await contract.name();
+				} catch (error) {
+					throw new NodeOperationError(this.getNode(), `Failed to fetch token name: ${error instanceof Error ? error.message : String(error)}. Make sure the contract supports the ERC-20 name() function.`);
+				}
 
 				// Define ERC-3009 domain according to EIP-3009
 				const domain: ERC3009Domain = {
-					name: 'USD Coin', // This should match the token name
+					name: tokenName,
 					version: '2', // ERC-3009 version
 					chainId: chainId,
 					verifyingContract: tokenContract,

@@ -6,40 +6,7 @@ import {
 	NodeOperationError,
 } from 'n8n-workflow';
 import { ethers } from 'ethers';
-
-interface ChainConfig {
-	name: string;
-	chainId: number;
-	rpcUrl: string;
-}
-
-const CHAIN_CONFIGS: ChainConfig[] = [
-	{
-		name: 'Ethereum Mainnet',
-		chainId: 1,
-		rpcUrl: 'https://eth.llamarpc.com',
-	},
-	{
-		name: 'Polygon',
-		chainId: 137,
-		rpcUrl: 'https://polygon.llamarpc.com',
-	},
-	{
-		name: 'Base',
-		chainId: 8453,
-		rpcUrl: 'https://base.llamarpc.com',
-	},
-	{
-		name: 'Sepolia Testnet',
-		chainId: 11155111,
-		rpcUrl: 'https://0xrpc.io/sep',
-	},
-	{
-		name: 'Base Sepolia Testnet',
-		chainId: 84532,
-		rpcUrl: 'https://base-sepolia.llamarpc.com',
-	},
-];
+import { CHAIN_CONFIGS } from './chainConfig';
 
 const PREDEFINED_FUNCTIONS = {
 	balanceOf: {
