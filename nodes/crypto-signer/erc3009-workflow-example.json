@@ -1,0 +1,74 @@
+{
+  "name": "ERC-3009 Signer Example",
+  "nodes": [
+    {
+      "parameters": {
+        "tokenContract": "0xA0b86a33E6441b8c4C8C0E4A0b86a33E6441b8c4C",
+        "fromAddress": "0x1234567890123456789012345678901234567890",
+        "toAddress": "0x0987654321098765432109876543210987654321",
+        "value": "1000000000000000000",
+        "validAfter": 1640995200,
+        "validBefore": 1641081600,
+        "nonce": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "operation": "sign"
+      },
+      "id": "sign-node",
+      "name": "Sign ERC-3009 Transfer",
+      "type": "n8n-nodes-erc3009-signer.ERC3009Signer",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "credentials": {
+        "evmPrivateKey": {
+          "id": "evm-private-key",
+          "name": "EVM Private Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tokenContract": "0xA0b86a33E6441b8c4C8C0E4A0b86a33E6441b8c4C",
+        "fromAddress": "0x1234567890123456789012345678901234567890",
+        "toAddress": "0x0987654321098765432109876543210987654321",
+        "value": "1000000000000000000",
+        "validAfter": 1640995200,
+        "validBefore": 1641081600,
+        "nonce": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+        "signatureToVerify": "={{ $json.signature }}",
+        "expectedSignerAddress": "={{ $json.signerAddress }}",
+        "operation": "verify"
+      },
+      "id": "verify-node",
+      "name": "Verify ERC-3009 Transfer",
+      "type": "n8n-nodes-erc3009-signer.ERC3009Signer",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "evmPrivateKey": {
+          "id": "evm-private-key",
+          "name": "EVM Private Key"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Sign ERC-3009 Transfer": {
+      "main": [
+        [
+          {
+            "node": "Verify ERC-3009 Transfer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "erc3009-signer-example",
+  "tags": []
+}
