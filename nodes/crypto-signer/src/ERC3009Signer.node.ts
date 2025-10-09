@@ -286,6 +286,8 @@ export class ERC3009Signer implements INodeType {
 						throw new NodeOperationError(this.getNode(), `Signature verification failed: ${error instanceof Error ? error.message : String(error)}`);
 					}
 
+					const { v, r, s } = ethers.Signature.from(signatureToVerify);
+
 					const isValid = recoveredAddress.toLowerCase() === expectedSignerAddress.toLowerCase();
 
 					returnData.push({
@@ -294,6 +296,9 @@ export class ERC3009Signer implements INodeType {
 							recoveredAddress,
 							expectedSignerAddress,
 							signature: signatureToVerify,
+							v,
+							r,
+							s,
 							domain,
 							types,
 							message,

@@ -45,7 +45,8 @@
     ],
     "nodes": [
       "dist/EIP712Signer.node.js",
-      "dist/ERC3009Signer.node.js"
+      "dist/ERC3009Signer.node.js",
+      "dist/EVMCall.node.js"
     ]
   },
   "devDependencies": {
