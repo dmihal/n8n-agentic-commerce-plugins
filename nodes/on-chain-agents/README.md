@@ -1,12 +1,13 @@
-# ERC-8004 Registry Node for n8n
+# On-Chain Agents Node Package for n8n
 
-This n8n node package provides integration with ERC-8004 registries for managing on-chain agents, including Identity, Reputation, and Validation registries.
+This n8n node package provides integration with on-chain agents and x402 payment protocols, including ERC-8004 registries and HTTP requests with automatic payment handling.
 
 ## Features
 
 - **Identity Registry**: Register agents, manage metadata, and query agent information
 - **Reputation Registry**: Give feedback, manage reputation, and query feedback data
 - **Validation Registry**: Request validations, respond to validation requests, and track validation status
+- **X402 HTTP Request**: Make HTTP requests with automatic x402 payment handling
 
 ## Supported Operations
 
@@ -29,12 +30,28 @@ This n8n node package provides integration with ERC-8004 registries for managing
 - Get validation status and summaries
 - Query validation requests and agent validations
 
+### X402 HTTP Request
+- Make HTTP requests with all standard methods (GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS)
+- Automatic x402 payment handling for 402 Payment Required responses
+- Support for URL parameters and custom headers
+- JSON body support for POST/PUT/PATCH requests
+- Decode and return X-PAYMENT-RESPONSE header data
+
 ## Configuration
 
+### ERC-8004 Registry Nodes
 1. **Registry Selection**: Choose between Identity, Reputation, or Validation registry
 2. **Blockchain Network**: Select from supported networks or use custom RPC
 3. **Contract Address**: Specify the registry contract address
 4. **Credentials**: Private key required for write operations
+
+### X402 HTTP Request Node
+1. **HTTP Method**: Choose from GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS
+2. **URL**: The target endpoint URL
+3. **URL Parameters**: Optional query parameters
+4. **Headers**: Custom HTTP headers (including Content-Type)
+5. **Body**: JSON payload for POST/PUT/PATCH requests
+6. **Credentials**: EVM private key required for x402 payment handling
 
 ## Supported Networks
 
