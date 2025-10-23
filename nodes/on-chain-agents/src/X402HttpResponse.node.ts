@@ -9,6 +9,7 @@ import type {
 	INodeTypeDescription,
 } from 'n8n-workflow';
 import { NodeOperationError, NodeConnectionTypes, jsonParse } from 'n8n-workflow';
+import { CHAIN_CONFIGS } from './chainConfig';
 
 export class X402HttpResponse implements INodeType {
 	description: INodeTypeDescription = {
@@ -54,6 +55,82 @@ export class X402HttpResponse implements INodeType {
 					},
 				},
 				description: 'The error message to include in the 402 response',
+			},
+			{
+				displayName: 'Asset Address',
+				name: 'assetAddress',
+				type: 'string',
+				default: '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'The contract address of the token to accept as payment',
+			},
+			{
+				displayName: 'Pay To Address',
+				name: 'payToAddress',
+				type: 'string',
+				default: '0x209693Bc6afc0C5328bA36FaF03C514EF312287C',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'The address to receive the payment',
+			},
+			{
+				displayName: 'Amount Required',
+				name: 'amountRequired',
+				type: 'string',
+				default: '10000',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'The amount of tokens required for payment (in smallest unit)',
+			},
+			{
+				displayName: 'Network',
+				name: 'network',
+				type: 'options',
+				options: CHAIN_CONFIGS.map(chain => ({
+					name: chain.name,
+					value: chain.name.toLowerCase().replace(/\s+/g, '-'),
+				})),
+				default: 'base-sepolia-testnet',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'The blockchain network for the payment',
+			},
+			{
+				displayName: 'Resource URL',
+				name: 'resourceUrl',
+				type: 'string',
+				default: 'https://api.example.com/premium-data',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'The URL of the resource being protected',
+			},
+			{
+				displayName: 'Description',
+				name: 'description',
+				type: 'string',
+				default: 'Access to premium market data',
+				displayOptions: {
+					show: {
+						responseMode: ['paymentRequired'],
+					},
+				},
+				description: 'Description of what the payment provides access to',
 			},
 			{
 				displayName: 'Response Data',
@@ -224,12 +301,46 @@ export class X402HttpResponse implements INodeType {
 			if (responseMode === 'paymentRequired') {
 				// Respond with 402 Payment Required
 				const message = this.getNodeParameter('paymentRequiredMessage', 0) as string;
+				const assetAddress = this.getNodeParameter('assetAddress', 0) as string;
+				const payToAddress = this.getNodeParameter('payToAddress', 0) as string;
+				const amountRequired = this.getNodeParameter('amountRequired', 0) as string;
+				const network = this.getNodeParameter('network', 0) as string;
+				const resourceUrl = this.getNodeParameter('resourceUrl', 0) as string;
+				const description = this.getNodeParameter('description', 0) as string;
+
+				// Map network names to their proper format
+				const networkMap: { [key: string]: string } = {
+					'ethereum-mainnet': 'ethereum',
+					'polygon': 'polygon',
+					'base': 'base',
+					'sepolia-testnet': 'sepolia',
+					'base-sepolia-testnet': 'base-sepolia',
+				};
+
+				const mappedNetwork = networkMap[network] || network;
 				
 				response = {
 					body: {
-						error: 'Payment Required',
-						message: message,
-						statusCode: 402,
+						x402Version: 1,
+						error: message,
+						accepts: [
+							{
+								scheme: 'exact',
+								network: mappedNetwork,
+								maxAmountRequired: amountRequired,
+								asset: assetAddress,
+								payTo: payToAddress,
+								resource: resourceUrl,
+								description: description,
+								mimeType: 'application/json',
+								outputSchema: null,
+								maxTimeoutSeconds: 60,
+								extra: {
+									name: 'USDC',
+									version: '2'
+								}
+							}
+						]
 					},
 					headers: {
 						...headers,
