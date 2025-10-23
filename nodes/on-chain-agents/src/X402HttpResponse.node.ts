@@ -218,6 +218,48 @@ export class X402HttpResponse implements INodeType {
 				placeholder: 'e.g. data',
 			},
 			{
+				displayName: 'Transaction Hash',
+				name: 'transactionHash',
+				type: 'string',
+				displayOptions: {
+					show: {
+						responseMode: ['success'],
+					},
+				},
+				default: '',
+				description: 'The transaction hash of the successful payment',
+				placeholder: '0x1234567890abcdef...',
+			},
+			{
+				displayName: 'Network',
+				name: 'successNetwork',
+				type: 'options',
+				options: CHAIN_CONFIGS.map(chain => ({
+					name: chain.name,
+					value: chain.name.toLowerCase().replace(/\s+/g, '-'),
+				})),
+				default: 'base-sepolia-testnet',
+				displayOptions: {
+					show: {
+						responseMode: ['success'],
+					},
+				},
+				description: 'The blockchain network where the payment was processed',
+			},
+			{
+				displayName: 'Payer Address',
+				name: 'payerAddress',
+				type: 'string',
+				displayOptions: {
+					show: {
+						responseMode: ['success'],
+					},
+				},
+				default: '',
+				description: 'The address of the account that made the payment',
+				placeholder: '0x857b06519E91e3A54538791bDbb0E22373e36b66',
+			},
+			{
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
@@ -390,6 +432,37 @@ export class X402HttpResponse implements INodeType {
 						this.getNode(),
 						`The Response Data option "${responseData}" is not supported!`,
 					);
+				}
+
+				// Add X-PAYMENT-RESPONSE header for success responses
+				const transactionHash = this.getNodeParameter('transactionHash', 0) as string;
+				const successNetwork = this.getNodeParameter('successNetwork', 0) as string;
+				const payerAddress = this.getNodeParameter('payerAddress', 0) as string;
+
+				if (transactionHash && payerAddress) {
+					// Map network names to their proper format
+					const networkMap: { [key: string]: string } = {
+						'ethereum-mainnet': 'ethereum',
+						'polygon': 'polygon',
+						'base': 'base',
+						'sepolia-testnet': 'sepolia',
+						'base-sepolia-testnet': 'base-sepolia',
+					};
+
+					const mappedNetwork = networkMap[successNetwork] || successNetwork;
+
+					const paymentResponse = {
+						success: true,
+						transaction: transactionHash,
+						network: mappedNetwork,
+						payer: payerAddress,
+					};
+
+					// Encode the payment response as base64
+					const paymentResponseJson = JSON.stringify(paymentResponse);
+					const paymentResponseBase64 = Buffer.from(paymentResponseJson, 'utf8').toString('base64');
+					
+					headers['x-payment-response'] = paymentResponseBase64;
 				}
 
 				response = {

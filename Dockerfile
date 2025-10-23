@@ -4,18 +4,29 @@ FROM n8nio/n8n:1.64.0
 USER node
 WORKDIR /home/node
 
-# copy manifests first for cache
-COPY nodes/*/package.json ./nodes-manifests/
-RUN mkdir -p /home/node/custom
+# copy workspace files
+COPY --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY --chown=node:node tsconfig.json ./
 
-# then sources
-COPY nodes/ /home/node/custom/
+# copy node packages
+COPY --chown=node:node nodes/ ./nodes/
 
-RUN set -e; \
-  for d in /home/node/custom/*; do \
-    cd "$d"; npm ci --omit=dev; npm run build; npm pack; \
-    npm install -g *.tgz; \
-  done
+USER root
+RUN echo "Disabling corepack and installing pnpm..." && \
+    corepack disable && \
+    npm install -g pnpm@10.19.0 && \
+    echo "Installing dependencies with pnpm..." && \
+    NODE_ENV=development pnpm install && \
+    echo "Building all packages..." && \
+    pnpm -r build && \
+    echo "Packing and installing packages..." && \
+    for d in nodes/*; do \
+      cd "$d"; \
+      pnpm pack; \
+      npm install -g *.tgz; \
+      cd /home/node; \
+    done
+USER node
 
 ENV N8N_USER_FOLDER=/data \
     N8N_DIAGNOSTICS_ENABLED=false \

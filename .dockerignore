@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+**/dist/
+**/.git/
+**/.gitignore
+**/README.md
+**/workflow-example.json
+**/x402-http-request-workflow-example.json
+**/erc3009-workflow-example.json
