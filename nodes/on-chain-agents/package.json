@@ -27,7 +27,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && cp src/*.png dist/",
     "build:watch": "tsc --watch",
     "dev": "tsc --watch",
     "package": "n8n-node-dev package",
