@@ -11,7 +11,7 @@ export class X402HttpEndpoint extends Node {
 	description: INodeTypeDescription = {
 		displayName: 'X402 HTTP Endpoint',
 		name: 'x402HttpEndpoint',
-		icon: 'file:x402-http-request.svg',
+		icon: 'file:x402-icon-blue.png',
 		group: ['trigger'],
 		version: 1,
 		description: 'HTTP endpoint trigger for X402 protocol with payment validation. Routes request data to different outputs based on whether a valid X402 payment is provided in the X-PAYMENT header. Use downstream nodes to handle HTTP responses.',

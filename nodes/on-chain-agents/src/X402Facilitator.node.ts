@@ -14,7 +14,7 @@ export class X402Facilitator implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'X402 Facilitator',
     name: 'x402Facilitator',
-    icon: 'file:x402.svg',
+    icon: 'file:x402-icon-blue.png',
     group: ['transform'],
     version: 1,
     subtitle: '={{"x402 " + $parameter["operation"]}}',

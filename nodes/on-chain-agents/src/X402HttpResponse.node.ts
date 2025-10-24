@@ -15,7 +15,7 @@ export class X402HttpResponse implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'X402 HTTP Response',
 		name: 'x402HttpResponse',
-		icon: 'file:x402-http-response.svg',
+		icon: 'file:x402-icon-blue.png',
 		group: ['transform'],
 		version: 1,
 		description: 'Responds to X402 HTTP Endpoint triggers with either a 402 Payment Required error or a successful response',

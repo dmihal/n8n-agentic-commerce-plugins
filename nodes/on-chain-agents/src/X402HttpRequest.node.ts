@@ -134,7 +134,7 @@ export class X402HttpRequest implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'X402 HTTP Request',
 		name: 'x402HttpRequest',
-		icon: 'file:x402-http-request.svg',
+		icon: 'file:x402-icon-blue.png',
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["method"] + " " + $parameter["url"]}}',
