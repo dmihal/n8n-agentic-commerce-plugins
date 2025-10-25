@@ -103,6 +103,10 @@ export class X402Facilitator implements INodeType {
         const operation  = this.getNodeParameter('operation', i) as string;
         const credentials = await this.getCredentials('x402FacilitatorApi');
 
+        const baseURL = credentials.facilitatorType === 'coinbase'
+          ? 'https://x402.org/facilitator'
+          : credentials.baseURL as string;
+
         let response: any;
 
         if (operation === 'verify') {
@@ -118,6 +122,7 @@ export class X402Facilitator implements INodeType {
             {
               method: 'POST',
               url: '/verify',
+              baseURL: baseURL,
               body: {
                 paymentPayload,
                 paymentRequirements,
@@ -138,7 +143,7 @@ export class X402Facilitator implements INodeType {
             {
               method: 'POST',
               url: '/settle',
-              baseURL: credentials.baseURL as string,
+              baseURL: baseURL,
               body: {
                 paymentPayload,
                 paymentRequirements,
@@ -157,6 +162,7 @@ export class X402Facilitator implements INodeType {
             {
               method: 'GET',
               url: '/supported',
+              baseURL: baseURL,
               json: true,
             }
           );
