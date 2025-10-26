@@ -325,9 +325,14 @@ export class ERC3009Signer implements INodeType {
 					const signature = await wallet.signTypedData(domain, types, message);
 					const signerAddress = wallet.address;
 
+					const { v, r, s } = ethers.Signature.from(signature);
+
 					returnData.push({
 						json: {
 							signature,
+							v,
+							r,
+							s,
 							signerAddress,
 							domain,
 							types,

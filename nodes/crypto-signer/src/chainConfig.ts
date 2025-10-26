@@ -28,6 +28,6 @@ export const CHAIN_CONFIGS: ChainConfig[] = [
 	{
 		name: 'Base Sepolia Testnet',
 		chainId: 84532,
-		rpcUrl: 'https://base-sepolia.llamarpc.com',
+		rpcUrl: 'https://sepolia.base.org',
 	},
 ];
