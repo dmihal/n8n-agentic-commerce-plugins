@@ -43,7 +43,7 @@ async function signTransferAuthorization(wallet: ethers.Wallet, provider: ethers
 	}
 
 	const chainId = await provider.getNetwork().then((network) => Number(network.chainId));
-	const validAfter = Math.floor(Date.now() / 1000);
+	const validAfter = Math.floor(Date.now() / 1000) - 60; // 1 minute ago
 	const validBefore = validAfter + 3600; // 1 hour
 	const nonce = ethers.keccak256(ethers.toUtf8Bytes(Math.random().toString()));
 
@@ -132,7 +132,7 @@ async function generatePaymentPayload(body: any, evmPrivateKey: string) {
 
 export class X402HttpRequest implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'X402 HTTP Request',
+		displayName: 'x402 HTTP Request',
 		name: 'x402HttpRequest',
 		icon: 'file:x402-icon-blue.png',
 		group: ['transform'],

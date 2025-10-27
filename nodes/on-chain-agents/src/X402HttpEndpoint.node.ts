@@ -9,7 +9,7 @@ import { Node } from 'n8n-workflow';
 
 export class X402HttpEndpoint extends Node {
 	description: INodeTypeDescription = {
-		displayName: 'X402 HTTP Endpoint',
+		displayName: 'x402 HTTP Endpoint',
 		name: 'x402HttpEndpoint',
 		icon: 'file:x402-icon-blue.png',
 		group: ['trigger'],

@@ -9,10 +9,11 @@ import {
   INodeTypeDescription,
   NodeOperationError,
 } from 'n8n-workflow';
+import { createFacilitatorConfig } from '@coinbase/x402';
 
 export class X402Facilitator implements INodeType {
   description: INodeTypeDescription = {
-    displayName: 'X402 Facilitator',
+    displayName: 'x402 Facilitator',
     name: 'x402Facilitator',
     icon: 'file:x402-icon-blue.png',
     group: ['transform'],
@@ -31,7 +32,7 @@ export class X402Facilitator implements INodeType {
     credentials: [
       {
         name: 'x402FacilitatorApi',
-        required: true,
+        required: false,
       },
     ],
 
@@ -107,6 +108,9 @@ export class X402Facilitator implements INodeType {
           ? 'https://x402.org/facilitator'
           : credentials.baseURL as string;
 
+        const config = createFacilitatorConfig(process.env.CDP_API_ID, process.env.CDP_SECRET);
+        const headers = await config.createAuthHeaders!();
+
         let response: any;
 
         if (operation === 'verify') {
@@ -116,18 +120,19 @@ export class X402Facilitator implements INodeType {
           const paymentPayload     = this.getNodeParameter('paymentPayload', i) as object;
           const paymentRequirements = JSON.parse(this.getNodeParameter('paymentRequirements', i) as string);
 
-          response = await this.helpers.requestWithAuthentication.call(
+          response = await this.helpers.httpRequest.call(
             this,
-            'x402FacilitatorApi',
             {
               method: 'POST',
               url: '/verify',
-              baseURL: baseURL,
+              baseURL: config.url,
               body: {
+                x402Version: 1,
                 paymentPayload,
                 paymentRequirements,
               },
-              json: true, // send JSON
+              headers: headers.verify,
+              json: true,
             }
           );
         } else if (operation === 'settle') {
@@ -137,32 +142,32 @@ export class X402Facilitator implements INodeType {
           const paymentPayload     = this.getNodeParameter('paymentPayload', i) as any;
           const paymentRequirements = JSON.parse(this.getNodeParameter('paymentRequirements', i) as string);
 
-          response = await this.helpers.requestWithAuthentication.call(
+          response = await this.helpers.httpRequest.call(
             this,
-            'x402FacilitatorApi',
             {
               method: 'POST',
               url: '/settle',
-              baseURL: baseURL,
+              baseURL: config.url,
               body: {
+                x402Version: 1,
                 paymentPayload,
                 paymentRequirements,
               },
+              headers: headers.settle,
               json: true,
-              followAllRedirects: true,
             }
           );
         } else if (operation === 'supported') {
           /* --------------------------------------------------------------
               Call /supported – no body needed
               -------------------------------------------------------------- */
-          response = await this.helpers.requestWithAuthentication.call(
+          response = await this.helpers.httpRequest.call(
             this,
-            'x402FacilitatorApi',
             {
               method: 'GET',
               url: '/supported',
-              baseURL: baseURL,
+              baseURL: config.url,
+              headers: headers.supported,
               json: true,
             }
           );

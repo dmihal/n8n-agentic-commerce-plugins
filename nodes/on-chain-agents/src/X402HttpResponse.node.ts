@@ -13,7 +13,7 @@ import { CHAIN_CONFIGS } from './chainConfig';
 
 export class X402HttpResponse implements INodeType {
 	description: INodeTypeDescription = {
-		displayName: 'X402 HTTP Response',
+		displayName: 'x402 HTTP Response',
 		name: 'x402HttpResponse',
 		icon: 'file:x402-icon-blue.png',
 		group: ['transform'],
