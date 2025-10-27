@@ -486,6 +486,11 @@ export class X402HttpResponse implements INodeType {
 			throw error;
 		}
 
-		return [items];
+    const returnItem: INodeExecutionData = {
+      json: { input: items, response },
+    };
+    const returnData = [returnItem];
+
+		return [returnData];
 	}
 }

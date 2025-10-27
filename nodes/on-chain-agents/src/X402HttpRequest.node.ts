@@ -6,6 +6,11 @@ import {
 	INodeTypeDescription,
 	NodeOperationError,
 } from 'n8n-workflow';
+import { CHAIN_CONFIGS } from './chainConfig';
+import { x402Response, PaymentRequirements, Network } from 'x402/types';
+
+// Subset of PaymentRequirements that we actually use for generating payloads
+type PaymentDetails = Pick<PaymentRequirements, 'asset' | 'payTo' | 'maxAmountRequired' | 'network'>;
 
 interface ERC3009Domain {
 	name: string;
@@ -23,6 +28,15 @@ interface TransferWithAuthorization {
 	nonce: string;
 }
 
+async function callContract<T>(contractAddress: string, abi: any[], provider: ethers.Provider, functionName: string, ...args: any[]): Promise<T> {
+	try {
+		const contract = new ethers.Contract(contractAddress, abi, provider);
+		return await contract[functionName](...args);
+	} catch (error) {
+		throw new Error(`Failed to call contract function: ${error instanceof Error ? error.message : String(error)}`);
+	}
+}
+
 async function signTransferAuthorization(wallet: ethers.Wallet, provider: ethers.Provider, {
 	asset,
 	toAddress,
@@ -33,14 +47,8 @@ async function signTransferAuthorization(wallet: ethers.Wallet, provider: ethers
 	amount: string;
 }) {
 	// Fetch token name dynamically
-	let tokenName: string;
-	try {
-		const abi = ['function name() view returns (string)'];
-		const contract = new ethers.Contract(asset, abi, provider);
-		tokenName = await contract.name();
-	} catch (error) {
-		throw new Error(`Failed to fetch token name: ${error instanceof Error ? error.message : String(error)}. Make sure the contract supports the ERC-20 name() function.`);
-	}
+	const tokenName: string = await callContract<string>(asset, ['function name() view returns (string)'], provider, 'name');
+
 
 	const chainId = await provider.getNetwork().then((network) => Number(network.chainId));
 	const validAfter = Math.floor(Date.now() / 1000) - 60; // 1 minute ago
@@ -83,7 +91,11 @@ async function signTransferAuthorization(wallet: ethers.Wallet, provider: ethers
 	};
 }
 
-async function generatePaymentPayload(body: any, evmPrivateKey: string) {					
+
+async function generatePaymentPayload(
+	paymentDetails: PaymentDetails,
+	evmPrivateKey: string
+) {
 	// Validate and normalize private key
 	evmPrivateKey = evmPrivateKey.trim();
 	if (!evmPrivateKey.startsWith('0x')) {
@@ -94,7 +106,12 @@ async function generatePaymentPayload(body: any, evmPrivateKey: string) {
 		throw new Error('Invalid private key format');
 	}
 
-	const provider = new ethers.JsonRpcProvider('https://sepolia.base.org/');
+	const chainConfig = CHAIN_CONFIGS.find(chain => chain.id === paymentDetails.network);
+	if (!chainConfig) {
+		throw new Error(`Unsupported network: ${paymentDetails.network}`);
+	}
+
+	const provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
 	let wallet: ethers.Wallet;
 	try {
 		wallet = new ethers.Wallet(evmPrivateKey, provider);
@@ -102,27 +119,22 @@ async function generatePaymentPayload(body: any, evmPrivateKey: string) {
 		throw new Error(`Invalid private key: ${error instanceof Error ? error.message : String(error)}`);
 	}
 
-	// Find the first accepted payment scheme in body.accepts
-	const accept = Array.isArray(body.accepts) && body.accepts.length > 0 ? body.accepts[0] : null;
-	if (!accept) {
-		throw new Error('No acceptable payment scheme found in response');
+	const balance = await callContract<string>(paymentDetails.asset, ['function balanceOf(address owner) view returns (uint256)'], provider, 'balanceOf', wallet.address);
+	if (balance < paymentDetails.maxAmountRequired) {
+		throw new Error(`Insufficient balance in wallet ${wallet.address}: ${balance} < ${paymentDetails.maxAmountRequired}`);
 	}
 
-	const { asset, payTo: toAddress, maxAmountRequired: amount } = accept;
-	if (!asset || !toAddress || !amount) {
-		throw new Error('Missing required fields in x402 payment accept object');
-	}
 
 	const { signature, message } = await signTransferAuthorization(wallet, provider, {
-		asset,
-		toAddress,
-		amount,
+		asset: paymentDetails.asset,
+		toAddress: paymentDetails.payTo,
+		amount: paymentDetails.maxAmountRequired,
 	});
 
 	return {
 		x402Version: 1,
 		scheme: 'exact',
-		network: accept.network,
+		network: paymentDetails.network,
 		payload: {
 			signature,
 			authorization: message,
@@ -276,6 +288,65 @@ export class X402HttpRequest implements INodeType {
 				},
 			},
 			{
+				displayName: 'Automatically fetch payment details',
+				name: 'autoFetchPayment',
+				type: 'boolean',
+				default: true,
+				description: 'Whether to automatically fetch payment details from the 402 response',
+			},
+			{
+				displayName: 'Network',
+				name: 'network',
+				type: 'options',
+				options: CHAIN_CONFIGS.map(chain => ({
+					name: chain.name,
+					value: chain.name.toLowerCase().replace(/\s+/g, '-'),
+				})),
+				default: 'base-sepolia-testnet',
+				description: 'The blockchain network for the payment',
+				displayOptions: {
+					show: {
+						autoFetchPayment: [false],
+					},
+				},
+			},
+			{
+				displayName: 'Amount',
+				name: 'amount',
+				type: 'string',
+				default: '',
+				description: 'The payment amount',
+				displayOptions: {
+					show: {
+						autoFetchPayment: [false],
+					},
+				},
+			},
+			{
+				displayName: 'Recipient Address',
+				name: 'recipientAddress',
+				type: 'string',
+				default: '',
+				description: 'The payment recipient address',
+				displayOptions: {
+					show: {
+						autoFetchPayment: [false],
+					},
+				},
+			},
+			{
+				displayName: 'Token Address',
+				name: 'tokenAddress',
+				type: 'string',
+				default: '',
+				description: 'The ERC-20 token contract address',
+				displayOptions: {
+					show: {
+						autoFetchPayment: [false],
+					},
+				},
+			},
+			{
 				displayName: 'Options',
 				name: 'options',
 				type: 'collection',
@@ -327,6 +398,7 @@ export class X402HttpRequest implements INodeType {
 				const headers = this.getNodeParameter('headers', i) as any;
 				const body = canHaveBody ? this.getNodeParameter('body', i) as string : undefined;
 				const options = this.getNodeParameter('options', i) as any;
+				const autoFetchPayment = this.getNodeParameter('autoFetchPayment', i) as boolean;
 
 				// Build URL with parameters
 				let requestUrl = url;
@@ -370,35 +442,63 @@ export class X402HttpRequest implements INodeType {
 					}
 				}
 
-				// Make the initial request
-				let response = await fetch(requestUrl, requestOptions);
-				let responseData: any = {};
-				let paymentResponse: any = null;
+				// Get credentials
+				const credentials = await this.getCredentials('evmPrivateKey', i);
+				if (!credentials?.privateKey) {
+					throw new NodeOperationError(this.getNode(), 'Private key is required');
+				}
 
-				// Check if we got a 402 Payment Required response
-				if (response.status === 402) {
-					const responseBody: any = await response.json();
-
-					const credentials = await this.getCredentials('evmPrivateKey', i);
-					if (!credentials?.privateKey) {
-						throw new NodeOperationError(this.getNode(), 'Private key is required for write operations');
+				// Build payment details based on mode
+				let paymentDetails: PaymentDetails | null = null;
+				
+				if (!autoFetchPayment) {
+					// Manual mode: build payment details from user parameters before making request
+					const network = this.getNodeParameter('network', i) as string;
+					const amount = this.getNodeParameter('amount', i) as string;
+					const recipientAddress = this.getNodeParameter('recipientAddress', i) as string;
+					const tokenAddress = this.getNodeParameter('tokenAddress', i) as string;
+					
+					if (!network || !amount || !recipientAddress || !tokenAddress) {
+						throw new NodeOperationError(this.getNode(), 'All payment parameters are required when auto-fetch is disabled');
 					}
 					
-					const paymentPayload = await generatePaymentPayload(responseBody, credentials.privateKey as string);
+					// Map network names to their proper format
+					const networkMap: { [key: string]: Network } = {
+						'polygon': 'polygon',
+						'base': 'base',
+						'base-sepolia-testnet': 'base-sepolia',
+					};
+					
+					const mappedNetwork = networkMap[network] || network;
+					
+					paymentDetails = {
+						asset: tokenAddress,
+						payTo: recipientAddress,
+						maxAmountRequired: amount,
+						network: mappedNetwork,
+					};
+				}
 
+				let response: Response;
+				let paymentResponse: any = null;
+
+				// If we have manual payment details, add payment header immediately
+				if (paymentDetails) {
+					const paymentPayload = await generatePaymentPayload(paymentDetails, credentials.privateKey as string);
 					const paymentPayloadHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
 					
-					// Add X-PAYMENT header and retry the request
-					const retryHeaders = { ...requestHeaders };
-					retryHeaders['X-PAYMENT'] = paymentPayloadHeader;
+					// Add X-PAYMENT header before making request
+					requestHeaders['X-PAYMENT'] = paymentPayloadHeader;
 					
-					const retryOptions: RequestInit = {
-						...requestOptions,
-						headers: retryHeaders,
-					};
+					// Update request options with the payment header
+					requestOptions.headers = requestHeaders;
+					
+					// Make the request with payment already included
+					response = await fetch(requestUrl, requestOptions);
 
-					// Make the retry request with payment header
-					response = await fetch(requestUrl, retryOptions);
+					if (response.status !== 200) {
+						throw new NodeOperationError(this.getNode(), `Request failed with payment, returned status ${response.status} ${response.statusText}`);
+					}
 
 					// Extract X-PAYMENT-RESPONSE header if present
 					const paymentResponseHeader = response.headers.get('X-PAYMENT-RESPONSE');
@@ -408,13 +508,73 @@ export class X402HttpRequest implements INodeType {
 							paymentResponse = JSON.parse(decodedPaymentResponse);
 						} catch (error) {
 							const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-							// If decoding fails, store the raw header value
 							paymentResponse = { raw: paymentResponseHeader, error: `Failed to decode payment response: ${errorMessage}` };
 						}
-					} else {
-						throw new NodeOperationError(this.getNode(), 'No payment response header found');
+					}
+				} else {
+					// Auto-fetch mode: make initial request and handle 402
+					response = await fetch(requestUrl, requestOptions);
+
+					// Check if we got a 402 Payment Required response
+					if (response.status === 402) {
+						const responseBody = await response.json() as x402Response;
+						console.log('responseBody', responseBody);
+
+						// Find the first accepted payment scheme in response
+						const accept = Array.isArray(responseBody.accepts) && responseBody.accepts.length > 0 ? responseBody.accepts[0] : null;
+						if (!accept) {
+							throw new Error('No acceptable payment scheme found in response');
+						}
+
+					const { asset, payTo, maxAmountRequired, network } = accept;
+					if (!asset || !payTo || !maxAmountRequired || !network) {
+						throw new Error('Missing required fields in x402 payment accept object');
+					}
+
+				paymentDetails = {
+					asset,
+					payTo,
+					maxAmountRequired,
+					network,
+				};
+
+				const paymentPayload = await generatePaymentPayload(paymentDetails!, credentials.privateKey as string);
+
+				const paymentPayloadHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
+				
+				// Add X-PAYMENT header and retry the request
+				const retryHeaders = { ...requestHeaders };
+				retryHeaders['X-PAYMENT'] = paymentPayloadHeader;
+				
+				const retryOptions: RequestInit = {
+					...requestOptions,
+					headers: retryHeaders,
+				};
+
+				// Make the retry request with payment header
+				response = await fetch(requestUrl, retryOptions);
+
+				if (response.status !== 200) {
+					throw new NodeOperationError(this.getNode(), `Payment failed, returned status ${response.status} ${response.statusText}`);
+				}
+
+				// Extract X-PAYMENT-RESPONSE header if present
+				const paymentResponseHeader = response.headers.get('X-PAYMENT-RESPONSE');
+				if (paymentResponseHeader) {
+					try {
+						const decodedPaymentResponse = Buffer.from(paymentResponseHeader, 'base64').toString('utf-8');
+						paymentResponse = JSON.parse(decodedPaymentResponse);
+					} catch (error) {
+						const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+						paymentResponse = { raw: paymentResponseHeader, error: `Failed to decode payment response: ${errorMessage}` };
+					}
+				} else {
+					throw new NodeOperationError(this.getNode(), 'No payment response header found');
+				}
 					}
 				}
+
+				let responseData: any = {};
 
 				// Parse response body
 				const contentType = response.headers.get('content-type');
