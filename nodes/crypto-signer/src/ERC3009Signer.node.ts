@@ -7,6 +7,7 @@ import {
 } from 'n8n-workflow';
 import { ethers } from 'ethers';
 import { CHAIN_CONFIGS } from './chainConfig';
+import { randomBytes } from 'crypto';
 
 interface ERC3009Domain {
 	name: string;
@@ -143,9 +144,40 @@ export class ERC3009Signer implements INodeType {
 				description: 'The time before which the authorization is valid (unix timestamp)',
 			},
 			{
+				displayName: 'Use Random Nonce',
+				name: 'randomNonce',
+				type: 'boolean',
+				displayOptions: {
+					show: {
+						operation: ['sign'],
+					},
+				},
+				default: false,
+				description: 'Whether to generate a random 32-byte nonce automatically',
+			},
+			{
 				displayName: 'Nonce',
 				name: 'nonce',
 				type: 'string',
+				displayOptions: {
+					show: {
+						operation: ['verify'],
+					},
+				},
+				default: '',
+				required: true,
+				description: 'A unique nonce for the authorization (32 bytes hex string)',
+			},
+			{
+				displayName: 'Nonce',
+				name: 'signingNonce',
+				type: 'string',
+				displayOptions: {
+					show: {
+						operation: ['sign'],
+						randomNonce: [false],
+					},
+				},
 				default: '',
 				required: true,
 				description: 'A unique nonce for the authorization (32 bytes hex string)',
@@ -222,7 +254,22 @@ export class ERC3009Signer implements INodeType {
 				const value = this.getNodeParameter('value', i) as string;
 				const validAfter = this.getNodeParameter('validAfter', i) as number;
 				const validBefore = this.getNodeParameter('validBefore', i) as number;
-				const nonce = this.getNodeParameter('nonce', i) as string;
+				
+				// Generate random nonce or use provided one
+				let nonce: string;
+				if (operation === 'sign') {
+					const useRandomNonce = this.getNodeParameter('randomNonce', i) as boolean;
+					if (useRandomNonce) {
+						// Generate a random 32-byte nonce
+						const randomBytes32 = randomBytes(32);
+						nonce = '0x' + randomBytes32.toString('hex');
+					} else {
+						nonce = this.getNodeParameter('signingNonce', i) as string;
+					}
+				} else {
+					// For verify operation, always use provided nonce
+					nonce = this.getNodeParameter('nonce', i) as string;
+				}
 
 				// Validate addresses
 				if (!ethers.isAddress(tokenContract)) {
