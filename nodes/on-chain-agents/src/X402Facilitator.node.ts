@@ -102,11 +102,11 @@ export class X402Facilitator implements INodeType {
     for (let i = 0; i < items.length; i++) {
       try {
         const operation  = this.getNodeParameter('operation', i) as string;
-        const credentials = await this.getCredentials('x402FacilitatorApi');
+        // const credentials = await this.getCredentials('x402FacilitatorApi');
 
-        const baseURL = credentials.facilitatorType === 'coinbase'
-          ? 'https://x402.org/facilitator'
-          : credentials.baseURL as string;
+        // const baseURL = credentials.facilitatorType === 'coinbase'
+        //   ? 'https://x402.org/facilitator'
+        //   : credentials.baseURL as string;
 
         const config = createFacilitatorConfig(process.env.CDP_API_ID, process.env.CDP_SECRET);
         const headers = await config.createAuthHeaders!();
