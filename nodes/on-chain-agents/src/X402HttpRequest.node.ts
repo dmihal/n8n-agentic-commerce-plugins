@@ -598,6 +598,7 @@ export class X402HttpRequest implements INodeType {
 						data: responseData,
 						url: requestUrl,
 						method,
+						paymentDetails,
 						paymentResponse,
 					},
 				};
