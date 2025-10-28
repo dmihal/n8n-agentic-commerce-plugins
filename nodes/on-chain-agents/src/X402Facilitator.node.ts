@@ -10,6 +10,8 @@ import {
   NodeOperationError,
 } from 'n8n-workflow';
 import { createFacilitatorConfig } from '@coinbase/x402';
+import { PaymentRequirements, Network } from 'x402/types';
+import { CHAIN_CONFIGS } from './chainConfig';
 
 export class X402Facilitator implements INodeType {
   description: INodeTypeDescription = {
@@ -78,12 +80,71 @@ export class X402Facilitator implements INodeType {
         },
       },
       {
-        displayName: 'Payment Requirements (JSON)',
-        name: 'paymentRequirements',
-        type: 'json',
-        description: 'The PaymentRequirements object that the facilitator will validate against',
-        default: '{}',
+        displayName: 'Network',
+        name: 'network',
+        type: 'options',
+        options: CHAIN_CONFIGS.map(chain => ({
+          name: chain.name,
+          value: chain.id,
+        })),
+        default: 'base-sepolia',
+        description: 'The blockchain network',
         required: true,
+        displayOptions: {
+          show: { operation: ['verify', 'settle'] },
+        },
+      },
+      {
+        displayName: 'Maximum Amount Required',
+        name: 'maxAmountRequired',
+        type: 'string',
+        description: 'The maximum amount required for payment',
+        default: '',
+        required: true,
+        displayOptions: {
+          show: { operation: ['verify', 'settle'] },
+        },
+      },
+      {
+        displayName: 'Asset Address',
+        name: 'asset',
+        type: 'string',
+        description: 'The ERC-20 token contract address',
+        default: '',
+        required: true,
+        displayOptions: {
+          show: { operation: ['verify', 'settle'] },
+        },
+      },
+      {
+        displayName: 'Payment Recipient Address',
+        name: 'payTo',
+        type: 'string',
+        description: 'The address to receive payment',
+        default: '',
+        required: true,
+        displayOptions: {
+          show: { operation: ['verify', 'settle'] },
+        },
+      },
+      {
+        displayName: 'Resource URL',
+        name: 'resource',
+        type: 'string',
+        description: 'The resource URL being paid for',
+        default: '',
+        required: false,
+        displayOptions: {
+          show: { operation: ['verify', 'settle'] },
+        },
+      },
+      {
+        displayName: 'Description',
+        name: 'description',
+        type: 'string',
+        description: 'Description of what the payment is for',
+        default: '',
+        required: false,
         displayOptions: {
           show: { operation: ['verify', 'settle'] },
         },
@@ -117,8 +178,22 @@ export class X402Facilitator implements INodeType {
           /* --------------------------------------------------------------
               Build the request body for /verify
               -------------------------------------------------------------- */
-          const paymentPayload     = this.getNodeParameter('paymentPayload', i) as object;
-          const paymentRequirements = JSON.parse(this.getNodeParameter('paymentRequirements', i) as string);
+          const paymentPayload = this.getNodeParameter('paymentPayload', i) as object;
+          const network = this.getNodeParameter('network', i) as string;
+          const maxAmountRequired = this.getNodeParameter('maxAmountRequired', i) as string;
+          const asset = this.getNodeParameter('asset', i) as string;
+          const payTo = this.getNodeParameter('payTo', i) as string;
+          const resource = this.getNodeParameter('resource', i) as string | undefined;
+          const description = this.getNodeParameter('description', i) as string | undefined;
+
+          const paymentRequirements: any = {
+            network,
+            maxAmountRequired,
+            asset,
+            payTo,
+          };
+          if (resource) paymentRequirements.resource = resource;
+          if (description) paymentRequirements.description = description;
 
           response = await this.helpers.httpRequest.call(
             this,
@@ -139,8 +214,29 @@ export class X402Facilitator implements INodeType {
           /* --------------------------------------------------------------
               Build the request body for /settle
               -------------------------------------------------------------- */
-          const paymentPayload     = this.getNodeParameter('paymentPayload', i) as any;
-          const paymentRequirements = JSON.parse(this.getNodeParameter('paymentRequirements', i) as string);
+          const paymentPayload = this.getNodeParameter('paymentPayload', i) as any;
+          const network = this.getNodeParameter('network', i) as string;
+          const maxAmountRequired = this.getNodeParameter('maxAmountRequired', i) as string;
+          const asset = this.getNodeParameter('asset', i) as string;
+          const payTo = this.getNodeParameter('payTo', i) as string;
+          const resource = this.getNodeParameter('resource', i) as string;
+          const description = this.getNodeParameter('description', i) as string;
+
+          const paymentRequirements: PaymentRequirements = {
+            scheme: 'exact',
+            network: network as Network,
+            maxAmountRequired: maxAmountRequired as string,
+            asset: asset as string,
+            payTo: payTo as string,
+            resource: resource as string,
+            description: description as string,
+            mimeType: 'application/json',
+            maxTimeoutSeconds: 60,
+            extra: {
+              name: 'USDC',
+              version: '2'
+            }
+          };
 
           response = await this.helpers.httpRequest.call(
             this,
