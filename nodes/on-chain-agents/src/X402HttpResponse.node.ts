@@ -375,7 +375,7 @@ export class X402HttpResponse implements INodeType {
 								resource: resourceUrl,
 								description: description,
 								mimeType: 'application/json',
-								outputSchema: null,
+								// outputSchema: null,
 								maxTimeoutSeconds: 60,
 								extra: {
 									name: 'USDC',
