@@ -101,7 +101,7 @@ async function generatePaymentPayload(
 	if (!evmPrivateKey.startsWith('0x')) {
 		evmPrivateKey = '0x' + evmPrivateKey;
 	}
-	
+
 	if (!/^0x[0-9a-fA-F]{64}$/.test(evmPrivateKey)) {
 		throw new Error('Invalid private key format');
 	}
@@ -450,27 +450,27 @@ export class X402HttpRequest implements INodeType {
 
 				// Build payment details based on mode
 				let paymentDetails: PaymentDetails | null = null;
-				
+
 				if (!autoFetchPayment) {
 					// Manual mode: build payment details from user parameters before making request
 					const network = this.getNodeParameter('network', i) as string;
 					const amount = this.getNodeParameter('amount', i) as string;
 					const recipientAddress = this.getNodeParameter('recipientAddress', i) as string;
 					const tokenAddress = this.getNodeParameter('tokenAddress', i) as string;
-					
+
 					if (!network || !amount || !recipientAddress || !tokenAddress) {
 						throw new NodeOperationError(this.getNode(), 'All payment parameters are required when auto-fetch is disabled');
 					}
-					
+
 					// Map network names to their proper format
 					const networkMap: { [key: string]: Network } = {
 						'polygon': 'polygon',
 						'base': 'base',
 						'base-sepolia-testnet': 'base-sepolia',
 					};
-					
+
 					const mappedNetwork = networkMap[network] || network;
-					
+
 					paymentDetails = {
 						asset: tokenAddress,
 						payTo: recipientAddress,
@@ -486,13 +486,13 @@ export class X402HttpRequest implements INodeType {
 				if (paymentDetails) {
 					const paymentPayload = await generatePaymentPayload(paymentDetails, credentials.privateKey as string);
 					const paymentPayloadHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
-					
+
 					// Add X-PAYMENT header before making request
 					requestHeaders['X-PAYMENT'] = paymentPayloadHeader;
-					
+
 					// Update request options with the payment header
 					requestOptions.headers = requestHeaders;
-					
+
 					// Make the request with payment already included
 					response = await fetch(requestUrl, requestOptions);
 
@@ -526,51 +526,56 @@ export class X402HttpRequest implements INodeType {
 							throw new Error('No acceptable payment scheme found in response');
 						}
 
-					const { asset, payTo, maxAmountRequired, network } = accept;
-					if (!asset || !payTo || !maxAmountRequired || !network) {
-						throw new Error('Missing required fields in x402 payment accept object');
-					}
+						const { asset, payTo, maxAmountRequired, network } = accept;
+						if (!asset || !payTo || !maxAmountRequired || !network) {
+							throw new Error('Missing required fields in x402 payment accept object');
+						}
 
-				paymentDetails = {
-					asset,
-					payTo,
-					maxAmountRequired,
-					network,
-				};
+						paymentDetails = {
+							asset,
+							payTo,
+							maxAmountRequired,
+							network,
+						};
 
-				const paymentPayload = await generatePaymentPayload(paymentDetails!, credentials.privateKey as string);
+						const paymentPayload = await generatePaymentPayload(paymentDetails!, credentials.privateKey as string);
 
-				const paymentPayloadHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
-				
-				// Add X-PAYMENT header and retry the request
-				const retryHeaders = { ...requestHeaders };
-				retryHeaders['X-PAYMENT'] = paymentPayloadHeader;
-				
-				const retryOptions: RequestInit = {
-					...requestOptions,
-					headers: retryHeaders,
-				};
+						const paymentPayloadHeader = Buffer.from(JSON.stringify(paymentPayload)).toString('base64');
 
-				// Make the retry request with payment header
-				response = await fetch(requestUrl, retryOptions);
+						// Add X-PAYMENT header and retry the request
+						const retryHeaders = { ...requestHeaders };
+						retryHeaders['X-PAYMENT'] = paymentPayloadHeader;
 
-				if (response.status !== 200) {
-					throw new NodeOperationError(this.getNode(), `Payment failed, returned status ${response.status} ${response.statusText}`);
-				}
+						const retryOptions: RequestInit = {
+							...requestOptions,
+							headers: retryHeaders,
+						};
 
-				// Extract X-PAYMENT-RESPONSE header if present
-				const paymentResponseHeader = response.headers.get('X-PAYMENT-RESPONSE');
-				if (paymentResponseHeader) {
-					try {
-						const decodedPaymentResponse = Buffer.from(paymentResponseHeader, 'base64').toString('utf-8');
-						paymentResponse = JSON.parse(decodedPaymentResponse);
-					} catch (error) {
-						const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-						paymentResponse = { raw: paymentResponseHeader, error: `Failed to decode payment response: ${errorMessage}` };
-					}
-				} else {
-					throw new NodeOperationError(this.getNode(), 'No payment response header found');
-				}
+						// Make the retry request with payment header
+						response = await fetch(requestUrl, retryOptions);
+
+						if (response.status === 402) {
+							const retryBody = await response.json() as any;
+							throw new NodeOperationError(this.getNode(), `Payment failed, 402 ${retryBody.error ? ` with error: ${retryBody.error}` : ''}`);
+						}
+
+						if (response.status !== 200) {
+							throw new NodeOperationError(this.getNode(), `Payment failed, returned status ${response.status} ${response.statusText}`);
+						}
+
+						// Extract X-PAYMENT-RESPONSE header if present
+						const paymentResponseHeader = response.headers.get('X-PAYMENT-RESPONSE');
+						if (paymentResponseHeader) {
+							try {
+								const decodedPaymentResponse = Buffer.from(paymentResponseHeader, 'base64').toString('utf-8');
+								paymentResponse = JSON.parse(decodedPaymentResponse);
+							} catch (error) {
+								const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+								paymentResponse = { raw: paymentResponseHeader, error: `Failed to decode payment response: ${errorMessage}` };
+							}
+						} else {
+							throw new NodeOperationError(this.getNode(), 'No payment response header found');
+						}
 					}
 				}
 
