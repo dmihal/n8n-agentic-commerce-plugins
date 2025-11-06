@@ -178,22 +178,29 @@ export class X402Facilitator implements INodeType {
           /* --------------------------------------------------------------
               Build the request body for /verify
               -------------------------------------------------------------- */
-          const paymentPayload = this.getNodeParameter('paymentPayload', i) as object;
+          const paymentPayload = this.getNodeParameter('paymentPayload', i) as any;
           const network = this.getNodeParameter('network', i) as string;
           const maxAmountRequired = this.getNodeParameter('maxAmountRequired', i) as string;
           const asset = this.getNodeParameter('asset', i) as string;
           const payTo = this.getNodeParameter('payTo', i) as string;
-          const resource = this.getNodeParameter('resource', i) as string | undefined;
-          const description = this.getNodeParameter('description', i) as string | undefined;
+          const resource = this.getNodeParameter('resource', i) as string;
+          const description = this.getNodeParameter('description', i) as string;
 
-          const paymentRequirements: any = {
-            network,
-            maxAmountRequired,
-            asset,
-            payTo,
+          const paymentRequirements: PaymentRequirements = {
+            scheme: 'exact',
+            network: network as Network,
+            maxAmountRequired: maxAmountRequired as string,
+            asset: asset as string,
+            payTo: payTo as string,
+            resource: resource as string,
+            description: description as string,
+            mimeType: 'application/json',
+            maxTimeoutSeconds: 60,
+            extra: {
+              name: 'USDC',
+              version: '2'
+            }
           };
-          if (resource) paymentRequirements.resource = resource;
-          if (description) paymentRequirements.description = description;
 
           response = await this.helpers.httpRequest.call(
             this,
