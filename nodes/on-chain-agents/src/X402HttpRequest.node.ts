@@ -154,6 +154,7 @@ export class X402HttpRequest implements INodeType {
 		defaults: {
 			name: 'X402 HTTP Request',
 		},
+		usableAsTool: true,
 		inputs: ['main'],
 		outputs: ['main'],
 		credentials: [
