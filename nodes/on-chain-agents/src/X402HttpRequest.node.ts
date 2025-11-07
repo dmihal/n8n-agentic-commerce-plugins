@@ -397,7 +397,7 @@ export class X402HttpRequest implements INodeType {
 				const url = this.getNodeParameter('url', i) as string;
 				const urlParameters = this.getNodeParameter('urlParameters', i) as any;
 				const headers = this.getNodeParameter('headers', i) as any;
-				const body = canHaveBody ? this.getNodeParameter('body', i) as string : undefined;
+				const body = canHaveBody ? this.getNodeParameter('body', i) as any : undefined;
 				const options = this.getNodeParameter('options', i) as any;
 				const autoFetchPayment = this.getNodeParameter('autoFetchPayment', i) as boolean;
 
@@ -436,7 +436,7 @@ export class X402HttpRequest implements INodeType {
 				// Add body for methods that support it
 				if (canHaveBody && body) {
 					try {
-						requestOptions.body = JSON.stringify(JSON.parse(body));
+						requestOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
 					} catch (error) {
 						const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 						throw new NodeOperationError(this.getNode(), `Invalid JSON body: ${errorMessage}`);
