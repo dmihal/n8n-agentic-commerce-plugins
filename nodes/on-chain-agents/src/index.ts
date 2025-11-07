@@ -5,6 +5,7 @@ import { X402FacilitatorApi } from './X402FacilitatorApi.credentials';
 import { X402HttpRequest } from './X402HttpRequest.node';
 import { X402HttpEndpoint } from './X402HttpEndpoint.node';
 import { X402HttpResponse } from './X402HttpResponse.node';
+import { WaitTool } from './WaitTool.node';
 
 export {
 	ERC8004Registry,
@@ -14,4 +15,5 @@ export {
 	X402HttpRequest,
 	X402HttpEndpoint,
 	X402HttpResponse,
+	WaitTool,
 };
