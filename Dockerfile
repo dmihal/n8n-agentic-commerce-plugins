@@ -1,5 +1,5 @@
 # docker/Dockerfile
-FROM n8nio/n8n:1.115.4
+FROM n8nio/n8n:1.122.2
 
 USER node
 WORKDIR /home/node
